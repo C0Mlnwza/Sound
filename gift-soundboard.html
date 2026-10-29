@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ซาวด์บอร์ดของขวัญ</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4eff9;--surface:#fff;--ink:#241b33;--muted:#6d6283;--line:#d8cde6;--accent:#6d28d9;--accent-ink:#fff;--danger:#c81e4a;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1631;--surface:#2a2145;--ink:#f1ebfb;--muted:#b3a6cc;--line:#43376a;--accent:#a78bfa;--accent-ink:#1d1631;--danger:#ff6b8b}}
+:root[data-theme="dark"]{--bg:#1d1631;--surface:#2a2145;--ink:#f1ebfb;--muted:#b3a6cc;--line:#43376a;--accent:#a78bfa;--accent-ink:#1d1631;--danger:#ff6b8b}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Prompt","Noto Sans Thai","Sarabun",system-ui,sans-serif;font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.5rem;margin:0 0 4px;font-weight:700}
+.sub{color:var(--muted);margin:0 0 18px;max-width:60ch}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px}
+button,input{font:inherit;color:inherit}
+button{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 16px;min-height:46px;cursor:pointer;touch-action:manipulation}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button.danger{color:var(--danger);border-color:var(--danger)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.vol{display:flex;align-items:center;gap:10px;flex:1 1 220px;min-width:200px}
+.vol input{flex:1;accent-color:var(--accent);min-height:30px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.pad{min-height:118px;border:0;border-radius:18px;padding:12px;font-weight:700;font-size:1.05rem;line-height:1.25;display:flex;align-items:flex-end;justify-content:flex-start;text-align:left;box-shadow:inset 0 -5px 0 rgba(0,0,0,.18);user-select:none;-webkit-user-select:none;transition:transform .06s}
+.pad:active,.pad.on{transform:scale(.96);filter:brightness(1.12)}
+.edit .pad{outline:3px dashed var(--ink);outline-offset:-6px}
+.empty{grid-column:1/-1;border:2px dashed var(--line);border-radius:18px;padding:36px 20px;text-align:center;color:var(--muted)}
+.note{margin-top:22px;color:var(--muted);font-size:.92rem;max-width:70ch}
+dialog{border:0;border-radius:20px;padding:0;background:var(--surface);color:var(--ink);width:min(440px,92vw)}
+dialog::backdrop{background:rgba(10,5,25,.55)}
+.dlg{padding:20px;display:grid;gap:14px}
+.dlg h2{margin:0;font-size:1.2rem}
+.dlg label{display:grid;gap:4px;color:var(--muted);font-size:.92rem}
+.dlg input[type=text],.dlg input[type=number]{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;min-height:46px;color:var(--ink)}
+#edColors{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.sw{width:42px;height:42px;border-radius:50%;padding:0;min-height:0;border:3px solid transparent}
+.sw[aria-pressed="true"]{border-color:var(--ink)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sp{flex:1}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
+#toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){.pad,#toast{transition:none}}
+</style>
+</head>
+<body>
+<main>
+  <h1>ซาวด์บอร์ดของขวัญ</h1>
+  <p class="sub">เพิ่มเพลงหรือเสียงของคุณเป็นปุ่ม แตะปุ่มเมื่อมีคนส่งของขวัญ เสียงจะเล่นทันที</p>
+  <div class="bar">
+    <button class="primary" id="add">เพิ่มเสียง</button>
+    <button id="stop">หยุดทุกเสียง</button>
+    <button id="editBtn" aria-pressed="false">โหมดแก้ไข</button>
+    <label class="vol">ระดับเสียง <input id="vol" type="range" min="0" max="1" step="0.01" value="0.9" aria-label="ระดับเสียงรวม"></label>
+  </div>
+  <div id="grid" aria-live="polite"></div>
+  <p class="note">เสียงที่เพิ่มจะถูกเก็บไว้ในเบราว์เซอร์ของเครื่องนี้ ปิดแล้วเปิดใหม่ก็ยังอยู่ ถ้าแตะแล้วไม่มีเสียง ให้ปิดโหมดเงียบของไอแพดและเพิ่มระดับเสียงเครื่อง แนะนำให้ตัดเพลงเหลือท่อนสั้น 3 ถึง 5 วินาที หรือใช้ช่อง “เล่นไม่เกินกี่วินาที” ในโหมดแก้ไข</p>
+</main>
+
+<input type="file" id="file" accept="audio/*" multiple hidden>
+
+<dialog id="ed">
+  <div class="dlg">
+    <h2>แก้ไขปุ่มเสียง</h2>
+    <label>ชื่อปุ่ม<input id="edName" type="text" maxlength="24"></label>
+    <label>เล่นไม่เกินกี่วินาที (0 = เล่นจนจบ)<input id="edMax" type="number" min="0" max="60" step="0.5" inputmode="decimal"></label>
+    <div><span style="color:var(--muted);font-size:.92rem">สี</span><div id="edColors"></div></div>
+    <div class="row">
+      <button id="edTest">ลองเล่น</button>
+      <button id="edDel" class="danger">ลบ</button>
+      <span class="sp"></span>
+      <button id="edCancel">ยกเลิก</button>
+      <button id="edSave" class="primary">บันทึก</button>
+    </div>
+  </div>
+</dialog>
+<div id="toast" role="status"></div>
+
+<script>
+const COLORS=['#ff4d6d','#ff9f1c','#ffd23f','#4ade80','#2ec4b6','#3a86ff','#8b5cf6','#ff6bd6'];
+const $=s=>document.querySelector(s);
+const grid=$('#grid'), ed=$('#ed');
+let pads=[], buffers={}, active={}, els={}, editMode=false, editing=null, pickedColor=COLORS[0], db=null;
+
+/* ---------- audio ---------- */
+const AC=window.AudioContext||window.webkitAudioContext;
+const ctx=new AC();
+const master=ctx.createGain(); master.gain.value=0.9; master.connect(ctx.destination);
+function wake(){ if(ctx.state!=='running') ctx.resume(); }
+document.addEventListener('pointerdown',wake,{passive:true});
+$('#vol').addEventListener('input',e=>{master.gain.value=parseFloat(e.target.value);});
+
+function stopPad(id){ const s=active[id]; if(s){ try{s.stop();}catch(e){} delete active[id]; } }
+function play(p){
+  wake();
+  const buf=buffers[p.id]; if(!buf) return;
+  Object.keys(active).forEach(stopPad);
+  const src=ctx.createBufferSource(); src.buffer=buf;
+  const g=ctx.createGain(); src.connect(g); g.connect(master);
+  const t=ctx.currentTime;
+  const limit=p.maxSec>0&&p.maxSec<buf.duration;
+  if(limit){ g.gain.setValueAtTime(1,t+Math.max(0,p.maxSec-0.15)); g.gain.linearRampToValueAtTime(0,t+p.maxSec); }
+  src.start(t); if(limit) src.stop(t+p.maxSec);
+  active[p.id]=src;
+  const el=els[p.id]; if(el) el.classList.add('on');
+  src.onended=()=>{ if(active[p.id]===src) delete active[p.id]; const e=els[p.id]; if(e) e.classList.remove('on'); };
+}
+$('#stop').addEventListener('click',()=>{ Object.keys(active).forEach(stopPad); });
+
+/* ---------- storage (IndexedDB) ---------- */
+function openDB(){return new Promise((res,rej)=>{
+  try{ const r=indexedDB.open('giftboard',1);
+    r.onupgradeneeded=()=>r.result.createObjectStore('pads',{keyPath:'id'});
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  }catch(e){rej(e);} });}
+function dbPut(p){ if(!db) return Promise.resolve();
+  return new Promise(res=>{ try{ const tx=db.transaction('pads','readwrite'); tx.objectStore('pads').put(p); tx.oncomplete=()=>res(); tx.onerror=()=>res(); }catch(e){res();} }); }
+function dbDel(id){ if(!db) return; try{ db.transaction('pads','readwrite').objectStore('pads').delete(id); }catch(e){} }
+function dbAll(){ if(!db) return Promise.resolve([]);
+  return new Promise(res=>{ try{ const r=db.transaction('pads').objectStore('pads').getAll(); r.onsuccess=()=>res(r.result||[]); r.onerror=()=>res([]); }catch(e){res([]);} }); }
+
+/* ---------- UI ---------- */
+function ink(h){const n=parseInt(h.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;return (0.299*r+0.587*g+0.114*b)>150?'#1b1230':'#ffffff';}
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2600); }
+
+function render(){
+  grid.innerHTML=''; els={};
+  grid.classList.toggle('edit',editMode);
+  if(!pads.length){
+    const d=document.createElement('div'); d.className='empty';
+    d.textContent='ยังไม่มีเสียง กด “เพิ่มเสียง” แล้วเลือกไฟล์เพลงหรือเสียงจากเครื่อง';
+    grid.appendChild(d); return;
+  }
+  pads.forEach(p=>{
+    const b=document.createElement('button'); b.className='pad'; b.type='button';
+    b.style.background=p.color; b.style.color=ink(p.color); b.textContent=p.name;
+    b.addEventListener('pointerdown',e=>{ e.preventDefault(); editMode?openEditor(p):play(p); });
+    b.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); editMode?openEditor(p):play(p); }});
+    grid.appendChild(b); els[p.id]=b;
+  });
+}
+
+$('#editBtn').addEventListener('click',e=>{ editMode=!editMode; e.currentTarget.setAttribute('aria-pressed',editMode); render(); });
+
+/* ---------- add files ---------- */
+$('#add').addEventListener('click',()=>{ wake(); $('#file').click(); });
+$('#file').addEventListener('change',async e=>{
+  const files=[...e.target.files]; e.target.value='';
+  let bad=0;
+  for(const f of files){
+    try{
+      const data=await f.arrayBuffer();
+      const buf=await ctx.decodeAudioData(data.slice(0));
+      const p={id:'p'+Date.now()+Math.random().toString(36).slice(2,6),
+        name:f.name.replace(/\.[^.]+$/,'').slice(0,24)||'เสียงใหม่',
+        color:COLORS[pads.length%COLORS.length], maxSec:0, data:data};
+      pads.push(p); buffers[p.id]=buf; await dbPut(p);
+    }catch(err){ bad++; }
+  }
+  render();
+  if(bad) toast('มี '+bad+' ไฟล์ที่เล่นไม่ได้ ลองใช้ไฟล์ mp3 หรือ m4a');
+});
+
+/* ---------- editor ---------- */
+function drawSwatches(){
+  const box=$('#edColors'); box.innerHTML='';
+  COLORS.forEach(c=>{
+    const s=document.createElement('button'); s.type='button'; s.className='sw'; s.style.background=c;
+    s.setAttribute('aria-label','สี '+c); s.setAttribute('aria-pressed',c===pickedColor);
+    s.addEventListener('click',()=>{ pickedColor=c; drawSwatches(); });
+    box.appendChild(s);
+  });
+}
+function openEditor(p){
+  editing=p; pickedColor=p.color;
+  $('#edName').value=p.name; $('#edMax').value=p.maxSec||0;
+  drawSwatches(); ed.showModal();
+}
+$('#edCancel').addEventListener('click',()=>ed.close());
+$('#edTest').addEventListener('click',()=>{
+  const max=parseFloat($('#edMax').value)||0;
+  play({...editing,maxSec:max});
+});
+$('#edSave').addEventListener('click',async()=>{
+  editing.name=($('#edName').value.trim()||'เสียง').slice(0,24);
+  editing.maxSec=Math.max(0,parseFloat($('#edMax').value)||0);
+  editing.color=pickedColor;
+  await dbPut(editing); ed.close(); render();
+});
+$('#edDel').addEventListener('click',()=>{
+  if(!confirm('ลบปุ่มเสียงนี้?')) return;
+  stopPad(editing.id); dbDel(editing.id);
+  pads=pads.filter(p=>p.id!==editing.id); delete buffers[editing.id];
+  ed.close(); render();
+});
+
+/* ---------- start ---------- */
+(async function init(){
+  try{ db=await openDB(); }catch(e){ db=null; toast('บันทึกลงเครื่องไม่ได้ เสียงจะหายเมื่อปิดหน้านี้'); }
+  const saved=await dbAll();
+  for(const p of saved){
+    try{ buffers[p.id]=await ctx.decodeAudioData(p.data.slice(0)); pads.push(p); }catch(e){}
+  }
+  render();
+})();
+</script>
+</body>
+</html>
